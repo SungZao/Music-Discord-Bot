@@ -1,26 +1,123 @@
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Bootstrap demo</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-  </head>
-  <body>
-    
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painel Musical</title>
 
-    <h1>Painel 🎧</h1>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <form action="/play">
-        <input name="nome" placeholder="nome da música">
-        <button>Tocar</button>
-    </form>
+  <style>
+    body { background:#0c0c0c; color:#fff; padding:30px; }
+    .card { background:#1a1a1a;  padding:20px; border-radius:12px; color:#fff }
+    .music-item { padding:10px; border-bottom:1px solid #333; cursor:pointer; display:flex; align-items:center; justify-content:space-between; }
+    .music-item:hover { background:#2a2a2a; }
+    .music-list { max-height:260px; overflow-y:auto; border:1px solid #333; }
+    .music-name { flex:1; padding-right:10px; word-break:break-word; }
+  </style>
+</head>
 
-    <a href="/skip">Pular</a><br>
-    <a href="/list">Listar</a>
+<body>
 
+  <h2 class="mb-3">🎧 Painel do Bot</h2>
 
+  <div class="card">
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
-  </body>
+    <div class="d-flex gap-2 mb-4">
+      <button class="btn btn-warning w-100" id="btn-skip">⏭ Pular</button>
+      <button class="btn btn-danger w-100" id="btn-stop">🛑 Parar</button>
+    </div>
+
+    <label>🔊 Volume</label>
+    <input id="volume" type="range" min="0" max="100" value="60" class="form-range">
+
+    <label class="mt-3">⏱ Tempo</label>
+    <input id="tempo" type="range" min="0" max="300" value="0" class="form-range">
+
+    <hr>
+
+    <h4>📁 Músicas</h4>
+    <div id="lista" class="music-list">Carregando...</div>
+  </div>
+
+<script>
+  // Helpers
+  function q(selector){ return document.querySelector(selector); }
+  function fetchText(url){ return fetch(url).then(r => r.text()); }
+
+  async function carregarLista(){
+    try {
+      const txt = await fetchText('/list');
+      const container = q('#lista');
+      container.innerHTML = ''; // limpa
+      const nomes = txt.split('<br>');
+      for (let i = 0; i < nomes.length; i++){
+        const raw = nomes[i].trim();
+        if (!raw) continue;
+
+        const item = document.createElement('div');
+        item.className = 'music-item';
+
+        const span = document.createElement('div');
+        span.className = 'music-name';
+        span.textContent = raw;
+        // tocar ao clicar no nome
+        span.addEventListener('click', function(){ tocar(raw); });
+
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-sm btn-primary';
+        btn.type = 'button';
+        btn.textContent = '▶';
+        // tocar ao clicar no botão
+        btn.addEventListener('click', function(){ tocar(raw); });
+
+        item.appendChild(span);
+        item.appendChild(btn);
+        container.appendChild(item);
+      }
+    } catch (err) {
+      document.getElementById('lista').innerText = 'Erro ao carregar lista';
+      console.error(err);
+    }
+  }
+
+  function tocar(nome){
+    // encode pra evitar problemas com espaços e acentos
+    const url = '/play?nome=' + encodeURIComponent(nome);
+    fetch(url).then(resp => resp.text()).then(t => {
+      // opcional: mostrar feedback sem alert chato
+      console.log('play:', t);
+    }).catch(e => console.error(e));
+  }
+
+  function pular(){
+    fetch('/skip').then(r => r.text()).then(t => console.log('skip:', t));
+  }
+
+  function parar(){
+    fetch('/stop').then(r => r.text()).then(t => console.log('stop:', t));
+  }
+
+  function ajustarVolume(v){
+    fetch('/volume?v=' + encodeURIComponent(v)).then(r => r.text()).then(t => console.log('vol:', t));
+  }
+
+  function ajustarTempo(v){
+    fetch('/seek?p=' + encodeURIComponent(v)).then(r => r.text()).then(t => console.log('seek:', t));
+  }
+
+  // eventos dos controles (delegar)
+  document.getElementById('btn-skip').addEventListener('click', pular);
+  document.getElementById('btn-stop').addEventListener('click', parar);
+  document.getElementById('volume').addEventListener('input', function(){ ajustarVolume(this.value); });
+  document.getElementById('tempo').addEventListener('input', function(){ ajustarTempo(this.value); });
+
+  // inicializa
+  carregarLista();
+
+  // opcional: atualizar lista a cada 30s
+  setInterval(carregarLista, 30000);
+</script>
+
+</body>
 </html>
