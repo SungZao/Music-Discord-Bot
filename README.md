@@ -31,6 +31,8 @@ Agora em Soundbot.py, no código, altere o Token do seu bot, e o IP do seu compu
 python soundbot.py
 
 
+Todas as músicas vão em music, de preferência no formato mp3, no discord, use /join pra fazer o bot entrar na sua chamada de voz, e ele ja está pronto pra tocar suas músicas.
+
 
 
 
