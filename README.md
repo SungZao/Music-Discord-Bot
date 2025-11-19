@@ -24,6 +24,8 @@ depois, na pasta do projeto, rode:
 
 pip install -r requirements.txt
 
+
+Crie uma pasta chamada "music" na mesma pasta que está o Soundbot.py.
 Agora em Soundbot.py, no código, altere o Token do seu bot, e o IP do seu computador local e pronto, você já pode rodar soundbot.py usando:
 
 python soundbot.py
